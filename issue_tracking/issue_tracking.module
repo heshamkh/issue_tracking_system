@@ -10,7 +10,7 @@ use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 
 /**
- * Implements hook_module_install().
+ * Implements hook_install().
  */
 function issue_tracking_install($module) {
 
