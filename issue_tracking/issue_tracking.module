@@ -12,7 +12,7 @@ use Drupal\field\Entity\FieldStorageConfig;
 /**
  * Implements hook_install().
  */
-function issue_tracking_install($module) {
+function issue_tracking_install() {
 
   // Check if the content type already exists.
   $issue_node_type = NodeType::load('issue_tracking_issue');
