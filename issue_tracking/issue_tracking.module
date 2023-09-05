@@ -14,11 +14,11 @@ use Drupal\field\Entity\FieldStorageConfig;
  */
 function issue_tracking_install($module) {
 
-  // Check if already exist content type.
+  // Check if the content type already exists.
   $issue_node_type = NodeType::load('issue_tracking_issue');
   if (empty($issue_node_type)) {
 
-    // We prefix the machine name to make sure that it's belong to this module only.
+    // We prefix the machine name to make sure that it belongs to this module only.
     $issue_content_type = NodeType::create([
       'type' => 'issue_tracking_issue',
       'name' => "Issues Tracking System",
@@ -97,8 +97,8 @@ function issue_tracking_install($module) {
     ],
   ])->save();
 
-  // now we create the taxonomies and fill it with some terms
-  // Vocabulary ids.
+  // now we create the taxonomies and fill them with some terms
+  // Vocabulary IDs.
   $vids = ["issue_type", "priority", "status"];
   // Vocabulary labels.
   $v_labels = ["issue_type" => "Issue type", "priority" => "Priority", "status" => "Status"];
@@ -110,7 +110,7 @@ function issue_tracking_install($module) {
 
   $vocabularies = Vocabulary::loadMultiple();
   foreach ($vids as $vid) {
-    // Check if the vocabulary already exist if not we create a vocabulary.
+    // Check if the vocabulary already exists if not we create a vocabulary.
     if (!isset($vocabularies[$vid])) {
       $vocabulary = Vocabulary::create([
         'vid' => $vid,
@@ -159,7 +159,7 @@ function issue_tracking_install($module) {
  * Implements hook_uninstall().
  */
 function issue_tracking_uninstall() {
-  // delete all nodes with our content type
+  // Delete all nodes with our content type
   $storage_handler = \Drupal::entityTypeManager()
     ->getStorage('node');
   $nodes = $storage_handler->loadByProperties(['type' => 'issue_tracking_issue']);
