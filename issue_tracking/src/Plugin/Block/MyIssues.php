@@ -69,7 +69,7 @@ class MyIssues extends BlockBase implements ContainerFactoryPluginInterface {
     $query = $nodeStorage->getQuery()
       ->accessCheck(TRUE)
       ->condition('status', '1')
-      ->condition('type', 'issue')
+      ->condition('type', 'issue_tracking_issue')
       ->condition('field_assignee', $this->currentUser->id())
       ->sort('nid', 'DESC')->range(0, 3)
       ->execute();
