@@ -5,12 +5,12 @@
  */
 #}
 <div class="row">
-	{% for issue in issues %}
-		<div class="col-4">
-			<span class="category ">{{"issue id"|t}} => {{issue.id}}</span>
-			<br>
-			<span class="category ">{{"issue Title"|t}} => {{issue.title}}</span>
-			<br>
-		</div>
-	{% endfor %}
+   {% for issue in issues %}
+      <div class="col-4">
+	 <span>{{"issue id"|t}} => {{issue.id}}</span>
+	 <br>
+	 <span>{{"issue Title"|t}} => {{issue.title}}</span>
+	 <br>
+      </div>
+   {% endfor %}
 </div>
