@@ -1,0 +1,200 @@
+<?php
+
+/**
+ * @file
+ */
+
+use Drupal\node\Entity\NodeType;
+use Drupal\taxonomy\Entity\Vocabulary;
+use Drupal\field\Entity\FieldConfig;
+use Drupal\field\Entity\FieldStorageConfig;
+
+/**
+ * Implements hook_module_install().
+ */
+function issue_tracking_install($module) {
+
+  // Check if already exist content type.
+  $issue_node_type = NodeType::load('issue_tracking_issue');
+  if (empty($issue_node_type)) {
+
+    // We prefix the machine name to make sure that it's belong to this module only.
+    $issue_content_type = NodeType::create([
+      'type' => 'issue_tracking_issue',
+      'name' => "Issues Tracking System",
+    ]);
+    $issue_content_type->save();
+  }
+  // Add the fields to issue_tracking_issue content type
+  // description field.
+  FieldStorageConfig::create([
+    'field_name' => 'field_description',
+    'type' => 'string',
+    'entity_type' => 'node',
+  ])->save();
+
+  FieldConfig::create([
+    'field_name' => 'field_description',
+    'entity_type' => 'node',
+    'bundle' => 'issue_tracking_issue',
+    'label' => "Description",
+  ])->save();
+
+    // description field.
+  FieldStorageConfig::create([
+    'field_name' => 'field_due_date',
+    'entity_type' => 'node',
+    'type' => 'datetime',
+    'settings' => ['datetime_type' => 'date'],
+  ])->save();
+
+  FieldConfig::create([
+    'field_name' => 'field_due_date',
+    'entity_type' => 'node',
+    'bundle' => 'issue_tracking_issue',
+    'label' => "Due Date",
+  ])->save();
+
+
+  // Assignee field.
+  FieldStorageConfig::create([
+    'field_name' => 'field_assignee',
+    'type' => 'entity_reference',
+    'entity_type' => 'node',
+    'settings' => [
+      'target_type' => 'user',
+    ],
+  ])->save();
+
+  FieldConfig::create([
+    'field_name' => 'field_assignee',
+    'entity_type' => 'node',
+    'bundle' => 'issue_tracking_issue',
+    'label' => 'Assignee',
+    'settings' => [
+      'handler' => 'default:user',
+    ],
+  ])->save();
+
+  // Watchers field.
+  FieldStorageConfig::create([
+    'field_name' => 'field_watchers',
+    'type' => 'entity_reference',
+    'entity_type' => 'node',
+    'cardinality' => -1,
+    'settings' => [
+      'target_type' => 'user',
+    ],
+  ])->save();
+
+  FieldConfig::create([
+    'field_name' => 'field_watchers',
+    'entity_type' => 'node',
+    'bundle' => 'issue_tracking_issue',
+    'label' => 'Watchers',
+    'settings' => [
+      'handler' => 'default:user',
+    ],
+  ])->save();
+
+  // now we create the taxonomies and fill it with some terms
+  // Vocabulary ids.
+  $vids = ["issue_type", "priority", "status"];
+  // Vocabulary labels.
+  $v_labels = ["issue_type" => "Issue type", "priority" => "Priority", "status" => "Status"];
+  $terms = [
+    "issue_type" => ['New feature,', 'Change', 'Task', 'Bug', 'Improvement'],
+    "priority" => ['Critical', 'High,', 'Low', 'Trivial'],
+    "status" => ['To Do', 'In Progress', 'In Review', 'Done'],
+  ];
+
+  $vocabularies = Vocabulary::loadMultiple();
+  foreach ($vids as $vid) {
+    // Check if the vocabulary already exist if not we create a vocabulary.
+    if (!isset($vocabularies[$vid])) {
+      $vocabulary = Vocabulary::create([
+        'vid' => $vid,
+        'name' => $v_labels[$vid],
+      ])->save();
+    }
+    else {
+      \Drupal::messenger()->addMessage($v_labels[$vid] . ' vocabulary already exits');
+    }
+    // Add the terms inside the vocabulary.
+    foreach ($terms[$vid] as $term) {
+      $term = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->create([
+        'name' => $term,
+        'vid' => $vid,
+      ])->save();
+    }
+    // Create the reference fields for issue content type related to taxonomies.
+    $field_name = 'taxonomy_' . $vid;
+    FieldStorageConfig::create([
+      'field_name' => $field_name,
+      'type' => 'entity_reference',
+      'entity_type' => 'node',
+      'settings' => [
+        'target_type' => 'taxonomy_term',
+      ],
+    ])->save();
+
+    FieldConfig::create([
+      'field_name' => $field_name,
+      'entity_type' => 'node',
+      'bundle' => 'issue_tracking_issue',
+      'label' => $v_labels[$vid],
+      'settings' => [
+        'handler' => 'default:taxonomy_term',
+        'handler_settings' => [
+          'target_bundles' => [
+            $vid => $vid,
+          ],
+        ],
+      ],
+    ])->save();
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function issue_tracking_uninstall() {
+  // delete all nodes with our content type
+  $storage_handler = \Drupal::entityTypeManager()
+    ->getStorage('node');
+  $nodes = $storage_handler->loadByProperties(['type' => 'issue_tracking_issue']);
+  $storage_handler->delete($nodes);
+
+  $vids = ["issue_type", "priority", "status"];
+  foreach ($vids as $vid) {
+    // Remove the fields.
+    $field_name = 'taxonomy_' . $vid;
+    FieldStorageConfig::loadByName('node', $field_name)->delete();
+    // Remove the vocabularies.
+    $vocab = Vocabulary::load($vid);
+    if ($vocab) {
+      $vocab->delete();
+    }
+  }
+  // Delete content type.
+  $content_type = \Drupal::entityTypeManager()
+    ->getStorage('node_type')
+    ->load('issue_tracking_issue');
+  $content_type->delete();
+
+}
+
+/**
+ * Implements hook_theme().
+ */
+function issue_tracking_theme() {
+  $theme = [];
+  // For my-issues twig template.
+  $theme['my_issues'] = [
+    'variables' => [
+      'issues' => NULL,
+    ],
+  ];
+
+  return $theme;
+}
